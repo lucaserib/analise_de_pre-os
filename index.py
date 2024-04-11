@@ -20,7 +20,7 @@ state_options = [{'label': x, 'value': x } for x in df['ESTADO'].unique()]
 
 
 # layout
-app.layout = dbc.Container([
+app.layout = dbc.Container(children=[
     dbc.Row([
         dbc.Col([
             ThemeSwitchAIO(aio_id='theme', themes = [url_theme1, url_theme2] ),
@@ -29,11 +29,9 @@ app.layout = dbc.Container([
                 id = 'estados',
                 value =[state['label']for state in state_options[:3]],
                 multi = True,
-                options=state_options
-
-            ),
+                options=state_options),
             dcc.Graph(id='line_graph')
-        ])
+        ],sm=12),
     ]),
     #Row2
     dbc.Row([
@@ -41,7 +39,7 @@ app.layout = dbc.Container([
         dbc.Col([
             dcc.Dropdown(
                 id='estado1',
-                value = state_options[0]['label'],
+                value = state_options[1]['label'],
                 options = state_options
             )            
         ], sm = 12, md = 6),
@@ -49,18 +47,17 @@ app.layout = dbc.Container([
         dbc.Col([
             dcc.Dropdown(
                 id = 'estado2',
-                value=state_options[1]['label'],
-                options=state_options 
-            )
+                value=state_options[3]['label'],
+                options=state_options),
         ], sm = 12, md = 6),
         #Graph 1 
         dbc.Col([
             dcc.Graph(id='indicator1')
-        ]),
+        ], sm=6),
         #Graph 2
         dbc.Col([
             dcc.Graph(id='indicator2')
-        ])
+        ],sm=6)
 
     ])
 ])
@@ -77,8 +74,8 @@ def line(estados, toggle):
     
     df_data = df.copy(deep=True)
     mask = df_data['ESTADO'].isin(estados)
-
-    fig = px.line(df_data[mask],x = 'DATA', y= 'VALOR REVENDA (R$/L)', color = 'ESTADO', template = template)
+    fig = px.line(df_data[mask],x = 'DATA', y= 'VALOR REVENDA (R$/L)',
+                   color = 'ESTADO', template = template)
 
     return fig
 
@@ -89,14 +86,14 @@ def line(estados, toggle):
     Output('indicator2', 'figure'),
     Input('estado1', 'value'),
     Input('estado2', 'value'),
-    Input(ThemeSwitchAIO.ids.switch('theme'), 'value')
+    Input(ThemeSwitchAIO.ids.switch("theme"), "value")
 )
 def indicators(estado1, estado2, toggle):
     template = template_theme1 if toggle else template_theme2
 
     df_data = df.copy(deep=True)
-    data_estado1 = df_data[df_data['ESTADO'].isin([estado1])]
-    data_estado2 = df_data[df_data['ESTADO'].isin([estado2])]
+    data_estado1 = df_data[df_data.ESTADO.isin([estado1])]
+    data_estado2 = df_data[df_data.ESTADO.isin([estado2])]
 
     initial_date = str(int(df_data['ANO'].min()) -1)
     final_date = df_data['ANO'].max()
@@ -123,4 +120,4 @@ def indicators(estado1, estado2, toggle):
 
 # Run server
 if __name__ == '__main__':
-    app.run_server(debug=True, port = '8051')
+    app.run_server(debug=True)
