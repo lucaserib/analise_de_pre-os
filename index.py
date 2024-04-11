@@ -7,10 +7,11 @@ from app import *
 from dash_bootstrap_templates import ThemeSwitchAIO
 
 # styles
-url_theme1 = dbc.themes.VAPOR
-url_theme2 = dbc.themes.FLATLY
 template_theme1 = 'vapor'
 template_theme2 = 'flatly'
+url_theme1 = dbc.themes.VAPOR
+url_theme2 = dbc.themes.FLATLY
+
 
 
 # Reading data
@@ -39,7 +40,7 @@ app.layout = dbc.Container([
         # Drop 1
         dbc.Col([
             dcc.Dropdown(
-                id='estado',
+                id='estado1',
                 value = state_options[0]['label'],
                 options = state_options
             )            
@@ -86,9 +87,9 @@ def line(estados, toggle):
 @app.callback(
     Output('indicator1','figure'),
     Output('indicator2', 'figure'),
-    Input('estado', 'value'),
+    Input('estado1', 'value'),
+    Input('estado2', 'value'),
     Input(ThemeSwitchAIO.ids.switch('theme'), 'value')
-
 )
 def indicators(estado1, estado2, toggle):
     template = template_theme1 if toggle else template_theme2
@@ -100,10 +101,26 @@ def indicators(estado1, estado2, toggle):
     initial_date = str(int(df_data['ANO'].min()) -1)
     final_date = df_data['ANO'].max()
 
+    iterable = [(estado1, data_estado1), (estado2, data_estado2)]
+    indicators = []
+
+    for estado, data in iterable:
+        fig = go.Figure()
+        fig.add_trace(go.Indicator(
+            mode = 'number+delta',
+            title={"text": f"<span>{estado}</span><br><span style='font-size:0.7em'>{initial_date} - {final_date}</span>"},
+            value=data.at[data.index[-1], 'VALOR REVENDA (R$/L)'],
+            number={'prefix':'R$', 'valueformat': '.2f'},
+            delta={'relative':True,'valueformat': '.1%','reference':data.at[data.index[0], 'VALOR REVENDA (R$/L)']}
+        ))
+
+        fig.update_layout(template=template)
+        indicators.append(fig)
+
+    return indicators
 
 
-    
 
-# Rodar os servidor
+# Run server
 if __name__ == '__main__':
     app.run_server(debug=True, port = '8051')
